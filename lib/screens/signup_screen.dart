@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -7,19 +8,37 @@ class SignUpScreen extends StatefulWidget {
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpScreenState extends State<SignUpScreen> with TickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  late AnimationController _cardController;
+  late Animation<double> _cardFade;
+  late Animation<double> _cardScale;
 
   @override
   void dispose() {
+    _cardController.dispose();
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cardController = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
+    _cardFade = Tween<double>(begin: 1.0, end: 0.85).animate(CurvedAnimation(
+      parent: _cardController,
+      curve: Curves.easeInOut,
+    ));
+    _cardScale = Tween<double>(begin: 1.0, end: 0.96).animate(CurvedAnimation(
+      parent: _cardController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   void _togglePasswordVisibility() {
@@ -32,41 +51,75 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  void _goToLogin() {
-    Navigator.pushReplacementNamed(context, '/login');
+  Future<void> _goToLogin() async {
+    await _cardController.forward();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 250),
+        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOut);
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0.0, 0.06), end: Offset.zero).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
+        decoration: BoxDecoration(
+          image: const DecorationImage(
+            image: AssetImage('assets/BLUE.jpg'),
+            fit: BoxFit.cover,
+          ),
+          gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF1A365D), Color(0xFF2D5A87)],
+            colors: [Color(0xCC0B1D3A), Color(0xCC1A365D)],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(32.0),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+              child: FadeTransition(
+                opacity: _cardFade,
+                child: ScaleTransition(
+                  scale: _cardScale,
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 380),
+                    padding: const EdgeInsets.all(30.0),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF0F2A3E).withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.cyan.withOpacity(0.1)
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.cyan.withOpacity(0.35),
+                          blurRadius: 30,
+                          spreadRadius: 2,
+                        ),
+                        BoxShadow(
+                          color: Colors.cyanAccent.withOpacity(0.15),
+                          blurRadius: 60,
+                          spreadRadius: 8,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Form(
+                    child: Form(
                   key: _formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -77,7 +130,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A365D),
+                          color: Color(0xFF0B121C),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -130,24 +183,42 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _signUp,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A365D),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      AnimatedBuilder(
+                        animation: _cardController,
+                        builder: (context, child) {
+                          final glow = 6 + (8 * (1 - _cardController.value));
+                          return Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.cyanAccent.withOpacity(0.45),
+                                  blurRadius: glow * 2,
+                                  spreadRadius: glow / 3,
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'SIGN UP',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ),
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _signUp,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0FB1D4),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'SIGN UP',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 24),
 
@@ -172,6 +243,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
                   ),
                 ),
               ),

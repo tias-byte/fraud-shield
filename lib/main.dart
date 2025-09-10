@@ -5,9 +5,11 @@ import 'screens/qr_scanner_screen.dart';
 import 'screens/url_checker_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
-
+import 'screens/intro_screen.dart';
 void main() {
-  runApp(const FraudShieldApp());
+  runApp(const FraudShieldApp(
+
+  ));
 }
 
 class FraudShieldApp extends StatelessWidget {
@@ -39,7 +41,7 @@ class FraudShieldApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SignUpScreen(),
+      home: const IntroScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),

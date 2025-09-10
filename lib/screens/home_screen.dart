@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _logout() {
     // Add your logout logic here
-    print("Logged out");
+    Text("Logged out");
   }
 
   @override
